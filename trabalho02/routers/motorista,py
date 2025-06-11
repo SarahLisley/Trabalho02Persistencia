@@ -1,0 +1,25 @@
+from fastapi import APIRouter, HTTPException
+from sqlmodel import Session, select
+from models.motorista import Motorista
+from database import get_session
+from typing import List
+
+router = APIRouter(prefix="/motoristas")
+
+@router.post("/", response_model=Motorista)
+def criar_motorista(motorista: Motorista, session: Session = get_session()):
+    session.add(motorista)
+    session.commit()
+    session.refresh(motorista)
+    return motorista
+
+@router.get("/", response_model=List[Motorista])
+def listar_motoristas(session: Session = get_session()):
+    return session.exec(select(Motorista)).all()
+
+@router.get("/{motorista_id}", response_model=Motorista)
+def obter_motorista(motorista_id: int, session: Session = get_session()):
+    motorista = session.get(Motorista, motorista_id)
+    if not motorista:
+        raise HTTPException(status_code=404, detail="Motorista não encontrado")
+    return motorista
